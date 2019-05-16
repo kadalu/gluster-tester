@@ -1,0 +1,17 @@
+- name: Run tests
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: "Run Tests of batch {{ lookup('env','BATCHNUM') }}"
+      # TODO: Add support to take batch file as input
+      shell: >
+        docker exec -it glusterfs-tester-{{ lookup('env','BATCHNUM') }}
+        /usr/share/glusterfs/run-tests.sh &> {{ lookup('env','LOGDIR') }}/run-tests.log
+
+    - name: Collect the logs
+      debug:
+        msg: "TODO: Collect the logs"
+
+    - name: Collect core report
+      debug:
+        msg: "TODO: Collect the core report"

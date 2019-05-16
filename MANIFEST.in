@@ -1,0 +1,2 @@
+include glustertester/playbooks/*.yaml
+include glustertester/scripts/*

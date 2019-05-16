@@ -1,0 +1,29 @@
+- name: Cleanup
+  hosts: localhost
+  vars_files:
+    - vars.yaml
+  gather_facts: false
+  tasks:
+    - name: Kill all Containers
+      command: "docker kill {{ container_name_prefix }}-{{ item }}"
+      when: testenv == "container"
+      with_sequence: 1-{{ num_parallel }}
+      ignore_errors: yes
+
+    - name: Delete all Containers
+      command: "docker rm {{ container_name_prefix }}-{{ item }}"
+      when: testenv == "container"
+      with_sequence: 1-{{ num_parallel }}
+      ignore_errors: yes
+
+    - name: Checkout to Master
+      command: "git checkout master"
+      args:
+        chdir: "{{ sourcedir }}"
+      ignore_errors: yes
+
+    - name: Delete Branch
+      command: "git branch -D test-{{ patch }}-{{ patchset }}"
+      args:
+        chdir: "{{ sourcedir }}"
+      ignore_errors: yes

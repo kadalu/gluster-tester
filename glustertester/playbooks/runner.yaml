@@ -1,0 +1,161 @@
+---
+- name: Common tasks
+  hosts: localhost
+  gather_facts: false
+  vars:
+    testerdir: "{{ lookup('env', 'TESTERDIR') }}"
+    testenv: "{{ lookup('env', 'TESTENV') | default('container') }}"
+    sourcedir: "{{ lookup('env', 'SOURCEDIR') | default('/usr/local/src/glusterfs') }}"
+    logdir: "{{ lookup('env', 'LOGDIR') | default('/var/log/gluster-tester') }}"
+    backenddir: "{{ lookup('env', 'BACKENDDIR') | default('/d') }}"
+    num_parallel: "{{ lookup('env', 'NUM_PARALLEL') | default('3') }}"
+    patch: "{{ lookup('env', 'PATCH') | default('0') }}"
+    patchset: "{{ lookup('env', 'PATCHSET') | default('0') }}"
+    container_name_prefix: "{{ lookup('env', 'CONTAINER_NAME_PFX') | default('glusterfs-tester') }}"
+    container_version: "{{ lookup('env', 'CONTAINER_VERSION') | default('latest') }}"
+    container_image: "{{ lookup('env', 'CONTAINER_IMAGE') | default('gluster/glusterfs-tester') }}"
+  tasks:
+    - name: Variables
+      debug:
+        msg: >
+          testerdir={{ testerdir }}  testenv={{ testenv }}
+          sourcedir={{ sourcedir }} logdir={{ logdir }} backenddir={{ backenddir }}
+          num_parallel={{ num_parallel }} patch={{ patch }} patchset={{ patchset }}
+          container_name_prefix={{ container_name_prefix }}
+          container_version={{ container_version }}
+          container_image={{ container_image }}
+
+    # - name: Delete the source directory
+    #   file:
+    #     state: absent
+    #     path: "{{ sourcedir }}"
+
+    # - name: Create source root directory
+    #   file:
+    #     state: directory
+    #     path: "{{ sourcedir | dirname }}"
+
+    # - name: Git checkout latest Master Branch
+    #   git:
+    #     depth: 1
+    #     clone: yes
+    #     update: yes
+    #     repo: https://review.gluster.org/glusterfs
+    #     dest: "{{ sourcedir }}"
+    #     version: master
+    #   when: patch == "0"
+
+    # - name: Git checkout with refspec
+    #   git:
+    #     depth: 1
+    #     clone: yes
+    #     update: yes
+    #     repo: https://review.gluster.org/glusterfs
+    #     dest: "{{ sourcedir }}"
+    #     refspec: refs/changes/{{ (patch | string)[-2:] }}/{{ patch }}/{{ patchset }}
+    #     version: master
+    #   when: patch != "0"
+
+    # - name: Fetch HEAD
+    #   command: git checkout -b test-{{ patch }}-{{ patchset }} FETCH_HEAD
+    #   args:
+    #     chdir: "{{ sourcedir }}"
+    #   when: patch != "0"
+
+    # - name: Delete backends root directory
+    #   file:
+    #     state: absent
+    #     path: "{{ backenddir }}"
+
+    # - name: Delete logs root directory
+    #   file:
+    #     state: absent
+    #     path: "{{ logdir }}"
+      
+    # - name: Create backends root directory
+    #   file:
+    #     state: directory
+    #     path: "{{ backenddir }}"
+
+    # - name: Create logs root directory
+    #   file:
+    #     state: directory
+    #     path: "{{ logdir }}"
+
+    # - name: Generate RPMs
+    #   shell: './make_glusterrpms &>{{ logdir }}/make_glusterrpms.log'
+    #   args:
+    #     chdir: "{{ sourcedir }}/extras/LinuxRPM"
+
+    - name: Delete the gluster-tester directory
+      file:
+        state: absent
+        path: "{{ sourcedir | dirname }}/gluster-tester"
+
+    - name: Create the gluster-tester directory
+      file:
+        state: directory
+        path: "{{ sourcedir | dirname }}/gluster-tester"
+
+    - name: Split Tests into multiple batches
+      command: >
+        python split-tests.py
+        --testsdir={{ sourcedir }}/tests
+        --output-prefix="tests"
+        --outdir={{ sourcedir | dirname }}/gluster-tester
+        -n {{ num_parallel }}
+      args:
+        chdir: "{{ testerdir }}/scripts/"
+
+    - name: Build Docker image
+      shell: "bash build-container.sh &>{{ logdir }}/build-container.log"
+      when: testenv == "container"
+      args:
+        chdir: "{{ testerdir }}/scripts/"
+      environment:
+        SOURCEDIR: "{{ sourcedir | dirname }}"
+
+    - name: Make log directories
+      file:
+        path: "{{ logdir }}/ld-{{ item }}"
+        state: directory
+      with_sequence: 1-{{ num_parallel | int }}
+
+    - name: Make backend directories
+      file:
+        path: "{{ backenddir }}/bd-{{ item }}"
+        state: directory
+      with_sequence: 1-{{ num_parallel | int }}
+
+    - name: Start the containers
+      command: >
+        docker run -d
+        --privileged=true
+        --device /dev/fuse
+        --name {{ container_name_prefix }}-{{ item }}
+        --mount type=bind,source={{ logdir }}/ld-{{ item }},target=/var/log
+        --mount type=bind,source={{ backenddir }}/bd-{{ item }},target=/d
+        {{ container_image }}:{{ container_version }}
+      when: testenv == "container"
+      with_sequence: 1-{{ num_parallel | int }}
+
+    - name: Tests Runner
+      command: >
+        python ./run-tests.py
+        --num-parallel {{ num_parallel }}
+      when: testenv == "container"
+
+    - name: Copy RPMs
+      debug:
+        msg: "TODO: Copy RPMS"
+      when: testenv == "vm"
+
+    - name: Install RPMs
+      debug:
+        msg: "TODO: Install RPMS"
+      when: testenv == "vm"
+
+    - name: Copy respective batch file
+      debug:
+        msg: "TODO: Copy RPMs"
+      when: testenv == "vm"
