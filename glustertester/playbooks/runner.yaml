@@ -25,67 +25,67 @@
           container_version={{ container_version }}
           container_image={{ container_image }}
 
-    # - name: Delete the source directory
-    #   file:
-    #     state: absent
-    #     path: "{{ sourcedir }}"
+    - name: Delete the source directory
+      file:
+        state: absent
+        path: "{{ sourcedir }}"
 
-    # - name: Create source root directory
-    #   file:
-    #     state: directory
-    #     path: "{{ sourcedir | dirname }}"
+    - name: Create source root directory
+      file:
+        state: directory
+        path: "{{ sourcedir | dirname }}"
 
-    # - name: Git checkout latest Master Branch
-    #   git:
-    #     depth: 1
-    #     clone: yes
-    #     update: yes
-    #     repo: https://review.gluster.org/glusterfs
-    #     dest: "{{ sourcedir }}"
-    #     version: master
-    #   when: patch == "0"
+    - name: Git checkout latest Master Branch
+      git:
+        depth: 1
+        clone: yes
+        update: yes
+        repo: https://review.gluster.org/glusterfs
+        dest: "{{ sourcedir }}"
+        version: master
+      when: patch == "0"
 
-    # - name: Git checkout with refspec
-    #   git:
-    #     depth: 1
-    #     clone: yes
-    #     update: yes
-    #     repo: https://review.gluster.org/glusterfs
-    #     dest: "{{ sourcedir }}"
-    #     refspec: refs/changes/{{ (patch | string)[-2:] }}/{{ patch }}/{{ patchset }}
-    #     version: master
-    #   when: patch != "0"
+    - name: Git checkout with refspec
+      git:
+        depth: 1
+        clone: yes
+        update: yes
+        repo: https://review.gluster.org/glusterfs
+        dest: "{{ sourcedir }}"
+        refspec: refs/changes/{{ (patch | string)[-2:] }}/{{ patch }}/{{ patchset }}
+        version: master
+      when: patch != "0"
 
-    # - name: Fetch HEAD
-    #   command: git checkout -b test-{{ patch }}-{{ patchset }} FETCH_HEAD
-    #   args:
-    #     chdir: "{{ sourcedir }}"
-    #   when: patch != "0"
+    - name: Fetch HEAD
+      command: git checkout -b test-{{ patch }}-{{ patchset }} FETCH_HEAD
+      args:
+        chdir: "{{ sourcedir }}"
+      when: patch != "0"
 
-    # - name: Delete backends root directory
-    #   file:
-    #     state: absent
-    #     path: "{{ backenddir }}"
+    - name: Delete backends root directory
+      file:
+        state: absent
+        path: "{{ backenddir }}"
 
-    # - name: Delete logs root directory
-    #   file:
-    #     state: absent
-    #     path: "{{ logdir }}"
+    - name: Delete logs root directory
+      file:
+        state: absent
+        path: "{{ logdir }}"
       
-    # - name: Create backends root directory
-    #   file:
-    #     state: directory
-    #     path: "{{ backenddir }}"
+    - name: Create backends root directory
+      file:
+        state: directory
+        path: "{{ backenddir }}"
 
-    # - name: Create logs root directory
-    #   file:
-    #     state: directory
-    #     path: "{{ logdir }}"
+    - name: Create logs root directory
+      file:
+        state: directory
+        path: "{{ logdir }}"
 
-    # - name: Generate RPMs
-    #   shell: './make_glusterrpms &>{{ logdir }}/make_glusterrpms.log'
-    #   args:
-    #     chdir: "{{ sourcedir }}/extras/LinuxRPM"
+    - name: Generate RPMs
+      shell: './make_glusterrpms &>{{ logdir }}/make_glusterrpms.log'
+      args:
+        chdir: "{{ sourcedir }}/extras/LinuxRPM"
 
     - name: Delete the gluster-tester directory
       file:
@@ -141,8 +141,10 @@
 
     - name: Tests Runner
       command: >
-        python ./run-tests.py
+        python run-tests.py
         --num-parallel {{ num_parallel }}
+      args:
+        chdir: "{{ testerdir }}/scripts/"
       when: testenv == "container"
 
     - name: Copy RPMs

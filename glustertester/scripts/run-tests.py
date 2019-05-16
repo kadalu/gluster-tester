@@ -1,25 +1,28 @@
 import os
+import sys
 import subprocess
 from argparse import ArgumentParser
 
 
 def runner_wait(proc):
     while proc.poll() is None:
-        for line in iter(self.proc.stdout.readline, ''):
+        for line in iter(proc.stdout.readline, ''):
             print(line.strip())
 
     proc.communicate()
-    return proc.returncode
+    return proc.returncode == 0
 
 
 def run_tests(args):
     jobs = []
+    playbookdir = os.path.dirname(os.path.abspath(__file__))  # scriptsdir
+    playbookdir = os.path.dirname(playbookdir) + "/playbooks"
     for num in range(args.num_parallel):
         test_env = os.environ.copy()
-        test_env["BATCHNUM"] = num
+        test_env["BATCHNUM"] = str(num)
 
         jobs.append(subprocess.Popen(
-            "ansible-playbook %s/run-tests.yaml 2>&1" % args.sourcedir,
+            "ansible-playbook %s/run-tests.yaml 2>&1" % playbookdir,
             shell=True,
             env=test_env,
             stdout=subprocess.PIPE

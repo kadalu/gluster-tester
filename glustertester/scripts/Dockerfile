@@ -1,4 +1,4 @@
-FROM docker.io/centos:7
+FROM docker.io/fedora:29
 
 RUN mkdir -p /root/rpms /root/tests
 
@@ -8,15 +8,14 @@ COPY glusterfs/extras/LinuxRPM /root/rpms/
 # Copy the tests batches
 COPY gluster-tester /root/tests/
 
-RUN yum update -y && \
-    yum -y install epel-release
+# RUN yum update -y && \
+#     yum -y install epel-release
 
 # Install Test dependencies
+# TODO: Include sysvinit-tools, netstat in case of centos
 RUN yum install -y perl-Test-Harness which attr dbench git \
-        nfs-utils netstat xfsprogs yajl sysvinit-tools \
-        python2-psutil userspace-rcu && \
-    yum clean all -y && \
-    rm -rf /var/cache/yum
+        nfs-utils xfsprogs yajl \
+        python2-psutil userspace-rcu
 
 # Install Gluster RPMs
 RUN rm -f /root/rpms/*.src.rpm
