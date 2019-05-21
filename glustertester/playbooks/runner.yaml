@@ -25,6 +25,51 @@
           container_version={{ container_version }}
           container_image={{ container_image }}
 
+    - name: Install the dependencies, docker and others
+      dnf:
+        name: "{{item}}"
+        state: latest
+      with_items:
+        - docker
+        - git
+        - autoconf
+        - automake
+        - bison
+        - dos2unix
+        - flex
+        - fuse-devel
+        - glib2-devel
+        - libaio-devel
+        - libattr-devel
+        - libibverbs-devel
+        - librdmacm-devel
+        - libtool
+        - libxml2-devel
+        - lvm2-devel
+        - make
+        - openssl-devel
+        - pkgconfig
+        - pyliblzma
+        - python-devel
+        - python-eventlet
+        - python-netifaces
+        - python-paste-deploy
+        - python-simplejson
+        - python-sphinx
+        - python-webob
+        - pyxattr
+        - readline-devel
+        - rpm-build
+        - systemtap-sdt-devel
+        - tar
+        - libcmocka-devel
+        - rpcgen
+        - libacl-devel
+        - sqlite-devel
+        - libtirpc-devel
+        - userspace-rcu-devel
+        - libselinux-python
+          
     - name: Delete the source directory
       file:
         state: absent
@@ -101,11 +146,16 @@
       command: >
         python split-tests.py
         --testsdir={{ sourcedir }}/tests
-        --output-prefix="tests"
+        --output-prefix="/usr/share/glusterfs/tests/"
         --outdir={{ sourcedir | dirname }}/gluster-tester
         -n {{ num_parallel }}
       args:
         chdir: "{{ testerdir }}/scripts/"
+
+    - name: Copy scripts to sourcedir
+      copy:
+        src: "{{ testerdir }}/scripts"
+        dest: "{{ sourcedir | dirname }}/gluster-tester"
 
     - name: Build Docker image
       shell: "bash build-container.sh &>{{ logdir }}/build-container.log"
@@ -140,9 +190,11 @@
       with_sequence: 1-{{ num_parallel | int }}
 
     - name: Tests Runner
-      command: >
+      shell: >
         python run-tests.py
         --num-parallel {{ num_parallel }}
+        --sourcedir {{ sourcedir }}
+        --logdir {{ logdir }} &>{{ logdir }}/run-tests.log
       args:
         chdir: "{{ testerdir }}/scripts/"
       when: testenv == "container"

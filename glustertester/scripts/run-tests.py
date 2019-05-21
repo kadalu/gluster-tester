@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import tarfile
 from argparse import ArgumentParser
 
 
@@ -15,14 +16,20 @@ def runner_wait(proc):
 
 def run_tests(args):
     jobs = []
-    playbookdir = os.path.dirname(os.path.abspath(__file__))  # scriptsdir
-    playbookdir = os.path.dirname(playbookdir) + "/playbooks"
+    scriptsdir = os.path.dirname(os.path.abspath(__file__))  # scriptsdir
+    playbookdir = os.path.dirname(scriptsdir) + "/playbooks"
     for num in range(args.num_parallel):
         test_env = os.environ.copy()
-        test_env["BATCHNUM"] = str(num)
+        test_env["BATCHNUM"] = str(num+1)
 
+        cmd = ("docker exec glusterfs-tester-%d bash /usr/share/glusterfs/regression.sh "
+               "-i /root/tests/tests-%d.dat 2>&1" % (
+                   num+1,
+                   num+1
+               ))
+        
         jobs.append(subprocess.Popen(
-            "ansible-playbook %s/run-tests.yaml 2>&1" % playbookdir,
+            cmd,
             shell=True,
             env=test_env,
             stdout=subprocess.PIPE
@@ -34,6 +41,10 @@ def run_tests(args):
         if not runner_wait(job):
             ret = 1
 
+    # if ret != 0:
+    #     with tarfile.open(os.path.join(args.workdir, "glusterfs-logs.tgz"), "w:gz") as tar:
+    #         tar.add(args.logdir, arcname=os.path.basename(args.logdir))
+
     sys.exit(ret)
 
 
@@ -41,6 +52,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument("--num-parallel", help="Number of parallel executions", type=int)
     parser.add_argument("--sourcedir", help="Glusterfs Source directory")
+    parser.add_argument("--logdir", help="Log directory")
     args = parser.parse_args()
 
     run_tests(args)

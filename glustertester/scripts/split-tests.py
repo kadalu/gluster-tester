@@ -48,7 +48,7 @@ def main():
         last += split_number
 
     for idx, testbatch in enumerate(tests_batch):
-        with open(os.path.join(args.outdir, "tests-%d.dat" % idx), "w") as batchfile:
+        with open(os.path.join(args.outdir, "tests-%d.dat" % idx+1), "w") as batchfile:
             batchfile.write("\n".join(testbatch))
 
     print("Tests split into %d batches" % args.batches)

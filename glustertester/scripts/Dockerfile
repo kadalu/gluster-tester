@@ -24,6 +24,9 @@ RUN yum install -y /root/rpms/*.rpm
 # Cleanup the RPMS
 RUN rm -rf /root/rpms
 
+COPY gluster-tester/scripts/regression.sh /usr/share/glusterfs/
+COPY gluster-tester/scripts/run-tests.sh /usr/share/glusterfs/
+
 ARG version="(unknown)"
 # Container build time (date -u '+%Y-%m-%dT%H:%M:%S.%NZ')
 ARG builddate="(unknown)"
