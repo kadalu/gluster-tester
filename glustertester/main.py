@@ -68,7 +68,7 @@ def main():
     args = get_args()
 
     if args.subcmd == "run":
-        return subcmd_run(args)
+        subcmd_run(args)
 
 
 if __name__ == "__main__":
