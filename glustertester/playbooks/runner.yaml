@@ -28,9 +28,11 @@
     - name: Install the dependencies, docker and others
       dnf:
         name: "{{item}}"
-        state: latest
+        state: present
+        update_cache: no
       with_items:
-        - docker
+        - docker-ce
+        - docker-ce-cli
         - git
         - autoconf
         - automake
@@ -161,7 +163,7 @@
       shell: "bash build-container.sh &>{{ logdir }}/build-container.log"
       when: testenv == "container"
       args:
-        chdir: "{{ testerdir }}/scripts/"
+        chdir: "{{ sourcedir | dirname }}/gluster-tester/scripts/"
       environment:
         SOURCEDIR: "{{ sourcedir | dirname }}"
 
@@ -176,6 +178,18 @@
         path: "{{ backenddir }}/bd-{{ item }}"
         state: directory
       with_sequence: 1-{{ num_parallel | int }}
+
+    - name: Kill all Containers
+      command: "docker kill {{ container_name_prefix }}-{{ item }}"
+      when: testenv == "container"
+      with_sequence: 1-{{ num_parallel | int }}
+      ignore_errors: yes
+
+    - name: Delete all Containers
+      command: "docker rm {{ container_name_prefix }}-{{ item }}"
+      when: testenv == "container"
+      with_sequence: 1-{{ num_parallel | int }}
+      ignore_errors: yes
 
     - name: Start the containers
       command: >
@@ -194,7 +208,7 @@
         python run-tests.py
         --num-parallel {{ num_parallel }}
         --sourcedir {{ sourcedir }}
-        --logdir {{ logdir }} &>{{ logdir }}/run-tests.log
+        --logdir {{ logdir }}
       args:
         chdir: "{{ testerdir }}/scripts/"
       when: testenv == "container"

@@ -39,6 +39,5 @@ function build_container()
         exit 1
 }
 
-scriptdir=$(dirname `realpath $0`)
-build_container "glusterfs-tester" "${scriptdir}/Dockerfile"
+build_container "glusterfs-tester" "gluster-tester/scripts/Dockerfile"
 

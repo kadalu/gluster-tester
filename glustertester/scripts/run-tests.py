@@ -23,7 +23,8 @@ def run_tests(args):
         test_env["BATCHNUM"] = str(num+1)
 
         cmd = ("docker exec glusterfs-tester-%d bash /usr/share/glusterfs/regression.sh "
-               "-i /root/tests/tests-%d.dat 2>&1" % (
+               "-i /root/tests/tests-%d.dat &>/var/log/gluster-tester/regression-%d.log" % (
+                   num+1,
                    num+1,
                    num+1
                ))
@@ -41,9 +42,9 @@ def run_tests(args):
         if not runner_wait(job):
             ret = 1
 
-    # if ret != 0:
-    #     with tarfile.open(os.path.join(args.workdir, "glusterfs-logs.tgz"), "w:gz") as tar:
-    #         tar.add(args.logdir, arcname=os.path.basename(args.logdir))
+    if ret != 0:
+        with tarfile.open("/var/log/gluster-tester/glusterfs-logs.tgz", "w:gz") as tar:
+            tar.add(args.logdir, arcname=os.path.basename(args.logdir))
 
     sys.exit(ret)
 

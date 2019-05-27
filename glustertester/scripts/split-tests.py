@@ -8,6 +8,9 @@ from argparse import ArgumentParser
 
 def get_list_of_tests(rootdir, testdir, tests, output_prefix=None):
     for testfile in os.listdir(testdir):
+        if testfile == "00-geo-rep":
+            continue
+
         full_path = os.path.join(testdir, testfile)
         if testfile.endswith(".t"):
             outpath = full_path.replace(rootdir + "/", "")
@@ -48,7 +51,7 @@ def main():
         last += split_number
 
     for idx, testbatch in enumerate(tests_batch):
-        with open(os.path.join(args.outdir, "tests-%d.dat" % idx+1), "w") as batchfile:
+        with open(os.path.join(args.outdir, "tests-%d.dat" % (idx+1)), "w") as batchfile:
             batchfile.write("\n".join(testbatch))
 
     print("Tests split into %d batches" % args.batches)

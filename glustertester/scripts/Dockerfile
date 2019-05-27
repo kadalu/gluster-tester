@@ -14,8 +14,14 @@ COPY gluster-tester /root/tests/
 # Install Test dependencies
 # TODO: Include sysvinit-tools, netstat in case of centos
 RUN yum install -y perl-Test-Harness which attr dbench git \
-        nfs-utils xfsprogs yajl \
-        python2-psutil userspace-rcu
+        nfs-utils xfsprogs yajl openssh-clients openssh-server \
+        openssh python2-psutil userspace-rcu
+
+# For Geo-rep, Prepare password less ssh
+RUN mkdir -p /root/.ssh
+RUN rm -rf .ssh/id_rsa*
+RUN ssh-keygen -N "" -f /root/.ssh/id_rsa
+RUN cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 
 # Install Gluster RPMs
 RUN rm -f /root/rpms/*.src.rpm
@@ -26,6 +32,8 @@ RUN rm -rf /root/rpms
 
 COPY gluster-tester/scripts/regression.sh /usr/share/glusterfs/
 COPY gluster-tester/scripts/run-tests.sh /usr/share/glusterfs/
+RUN chmod +x /usr/share/glusterfs/regression.sh
+RUN chmod +x /usr/share/glusterfs/run-tests.sh
 
 ARG version="(unknown)"
 # Container build time (date -u '+%Y-%m-%dT%H:%M:%S.%NZ')
