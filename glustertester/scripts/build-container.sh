@@ -4,8 +4,10 @@ set -e -o pipefail
 
 DOCKER_USER="${DOCKER_USER:-gluster}"
 CONTAINER_VERSION="${CONTAINER_VERSION:-latest}"
-
-SOURCEDIR="${SOURCEDIR:-/usr/local/src}"
+NPARALLEL="${NPARALLEL:-3}"
+REFSPEC="${REFSPEC}"
+BASEOS="${BASEOS:-fedora}"
+BASEVERSION="${BASEVERSION:-29}"
 
 RUNTIME_CMD=${RUNTIME_CMD:-docker}
 build="build"
@@ -20,6 +22,10 @@ build_args=()
 build_args+=(--build-arg "version=$VERSION")
 build_args+=(--build-arg "builddate=$BUILDDATE")
 build_args+=(--build-arg "sourcedir=$SOURCEDIR")
+build_args+=(--build-arg "nparallel=$NPARALLEL")
+build_args+=(--build-arg "baseos=$BASEOS")
+build_args+=(--build-arg "baseversion=$BASEVERSION")
+build_args+=(--build-arg "refspec=$REFSPEC")
 
 # Print Docker version
 echo "=== $RUNTIME_CMD version ==="
@@ -29,7 +35,7 @@ function build_container()
 {
     IMAGE_NAME=$1
     DOCKERFILE=$2
-    cd $SOURCEDIR;
+    cd $(dirname `realpath $0`);
     $RUNTIME_CMD $build \
                  -t "${DOCKER_USER}/${IMAGE_NAME}:${CONTAINER_VERSION}" \
                  "${build_args[@]}" \
@@ -39,5 +45,4 @@ function build_container()
         exit 1
 }
 
-build_container "glusterfs-tester" "gluster-tester/scripts/Dockerfile"
-
+build_container "glusterfs-tester" "Dockerfile"

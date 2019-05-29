@@ -15,12 +15,13 @@ def run_tests(args):
 
         cmd = ("docker exec glusterfs-tester-%d bash "
                "/usr/share/glusterfs/regression.sh "
-               "-i /root/tests/tests-%d.dat "
-               "&>/var/log/gluster-tester/regression-%d.log" % (
-                   num+1,
-                   num+1,
-                   num+1
-               ))
+               "-i /root/tests/tests-%d.dat " % (num+1, num+1)
+        )
+
+        if args.ignore_failure:
+            cmd += " -c"  # exit_on_failure=no in run-tests.sh
+
+        cmd += " &>/var/log/gluster-tester/regression-%d.log" % (num+1)
 
         jobs.append(subprocess.Popen(
             cmd,
@@ -33,20 +34,27 @@ def run_tests(args):
     ret = 0
     terminate = False
     while not terminate:
+        num_jobs_complete = 0
         for idx, job in enumerate(jobs):
             job_ret = job.poll()
             if job_ret is not None:
-                if job_ret != 0:
+                num_jobs_complete += 1
+                if job_ret != 0 and not args.ignore_failure:
                     print("Job %d failed. Stopping all "
                           "other running jobs" % (idx+1))
                     ret = job_ret
                     terminate = True
                     break
+
+        # If all jobs complete(success or fail)
+        if num_jobs_complete == len(jobs):
+            break
+
         time.sleep(1)
 
     # Now cleanup the jobs
     for job in jobs:
-        if job.poll() is not None:
+        if job.poll() is None:
             try:
                 job.terminate()
             except OSError as err:
@@ -67,8 +75,8 @@ def main():
     parser = ArgumentParser()
     parser.add_argument("--num-parallel",
                         help="Number of parallel executions", type=int)
-    parser.add_argument("--sourcedir", help="Glusterfs Source directory")
     parser.add_argument("--logdir", help="Log directory")
+    parser.add_argument("--ignore-failure", action="store_true")
     args = parser.parse_args()
 
     run_tests(args)

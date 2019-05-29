@@ -12,15 +12,24 @@ cd gluster-tester
 sudo python setup.py install
 ```
 
-Run the tests using the following command(Multi VM support is coming soon),
+Cleanup the backend directory and log directories and run the tests
+using the following command,
 
 ```
+rm -rf /var/logs/gluster-tester
+rm -rf /d
+mkdir -p /var/logs/gluster-tester /d
+
 gluster-tester run \
-    --testenv=container \
     --num-parallel=3 \
-    --sourcedir=/usr/local/src/glusterfs \
     --backenddir=/d \
-    --logdir=/var/logs/gluster-tester
-    --patch=22760
-    --patchset=1
+    --logdir=/var/logs/gluster-tester \
+    --refspec="refs/changes/60/22760/1"
 ```
+
+## Logs
+
+- **<logdir>/build-container.log** Logs related to git clone, RPM build,
+and container preparation steps
+- **<logdir>/regression-{1..N}.log** Regression tests output
+- **<logdir>/ld-{1..N}/\*** Gluster Logs from each container
