@@ -48,7 +48,7 @@ def get_args():
     parser_run.add_argument("--testenv", default="container",
                             help="Test environment",
                             choices=["container", "vm"])
-    parser_run.add_argument("--num-parallel", default=3,
+    parser_run.add_argument("--num-parallel", default=3, type=int,
                             help="Number of parallel testers")
     parser_run.add_argument("--sourcedir", help="Directory to clone Glusterfs",
                             default="/usr/local/src/glusterfs")
@@ -75,6 +75,10 @@ def subcmd_run(args):
                   "&>%s/build-container.log" % (scriptsdir, args.logdir),
                   env=test_env
     )
+
+    for num in range(1, args.num_parallel+1):
+        run_else_exit("mkdir -p %s" % os.path.join(args.backenddir, "bd-%d" % num))
+        run_else_exit("mkdir -p %s" % os.path.join(args.logdir, "ld-%d" % num))
 
     for num in range(1, args.num_parallel+1):
         run_else_ignore("docker kill glusterfs-tester-%d" % num)
