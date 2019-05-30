@@ -49,7 +49,7 @@ def get_args():
                             help="Test environment",
                             choices=["container", "vm"])
     parser_run.add_argument("--num-parallel", default=3,
-                            help="Number of parallel testers")
+                            help="Number of parallel testers", type=int)
     parser_run.add_argument("--sourcedir", help="Directory to clone Glusterfs",
                             default="/usr/local/src/glusterfs")
     parser_run.add_argument("--backenddir",
