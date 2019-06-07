@@ -12,6 +12,13 @@ cd gluster-tester
 sudo python setup.py install
 ```
 
+Create the base image by running the following command.(This command
+can be scheduled to run nightly)
+
+```
+gluster-tester baseimg
+```
+
 Cleanup the backend directory and log directories and run the tests
 using the following command,
 
