@@ -1,33 +1,9 @@
-ARG baseversion=29
-ARG baseos=fedora
-FROM ${baseos}:${baseversion}
+FROM gluster/glusterfs-tester-base
 
 # Redefining since arg defined before FROM is not accessible here
 ARG baseos=fedora
 
 RUN mkdir -p /root/tests
-
-# TODO: Handle CentOS dependencies
-# TODO: Include sysvinit-tools, netstat in case of centos
-RUN if [ "x$baseos" = "xfedora" ]; then \
-        yum install -y \
-        git autoconf automake bison dos2unix flex fuse-devel glib2-devel \
-        libaio-devel libattr-devel libibverbs-devel librdmacm-devel \
-        libtool libxml2-devel lvm2-devel make openssl-devel pkgconfig \
-        pyliblzma python-devel python-eventlet python-netifaces python-paste-deploy \
-        python-simplejson python-sphinx python-webob pyxattr readline-devel \
-        rpm-build systemtap-sdt-devel tar libcmocka-devel rpcgen libacl-devel \
-        sqlite-devel libtirpc-devel userspace-rcu-devel libselinux-python \
-        perl-Test-Harness which attr dbench git nfs-utils xfsprogs \
-        yajl openssh-clients openssh-server openssh python2-psutil userspace-rcu \
-        firewalld libcurl-devel python3-devel \
-        ;fi
-
-# For Geo-rep, Prepare password less ssh
-RUN mkdir -p /root/.ssh
-RUN rm -rf .ssh/id_rsa*
-RUN ssh-keygen -N "" -f /root/.ssh/id_rsa
-RUN cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 
 ARG refspec=""
 RUN cd /root/ && git clone --depth 1 https://review.gluster.org/glusterfs

@@ -62,7 +62,18 @@ def get_args():
                             default="")
     parser_run.add_argument("--ignore-failure", action="store_true")
 
+    parser_baseimg = subparsers.add_parser('baseimg')
+    parser_baseimg.add_argument("--logdir",
+                                help="Root Log directory for all testers",
+                                default="/var/log/gluster-tester")
     return parser.parse_args()
+
+
+def subcmd_baseimg(args):
+    scriptsdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts")
+    run_else_exit("bash %s/build-container.sh glusterfs-tester-base base.Dockerfile"
+                  "&>%s/build-base-container.log" % (scriptsdir, args.logdir)
+    )
 
 
 def subcmd_run(args):
@@ -71,7 +82,7 @@ def subcmd_run(args):
     test_env["NPARALLEL"] = str(args.num_parallel)
     test_env["REFSPEC"] = args.refspec
 
-    run_else_exit("bash %s/build-container.sh "
+    run_else_exit("bash %s/build-container.sh glusterfs-tester Dockerfile"
                   "&>%s/build-container.log" % (scriptsdir, args.logdir),
                   env=test_env
     )
@@ -91,6 +102,7 @@ def subcmd_run(args):
         name = "glusterfs-tester-%d" % num
         run_else_exit(
             "docker run -d"
+            " --cap-add sys_admin"
             " --privileged=true"
             " --device /dev/fuse"
             " --name " + name +
@@ -114,6 +126,10 @@ def main():
 
         if args.subcmd == "run":
             subcmd_run(args)
+            return
+
+        if args.subcmd == "baseimg":
+            subcmd_baseimg(args)
             return
     except KeyboardInterrupt:
         sys.exit(1)

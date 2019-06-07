@@ -45,4 +45,4 @@ function build_container()
         exit 1
 }
 
-build_container "glusterfs-tester" "Dockerfile"
+build_container $1 $2
