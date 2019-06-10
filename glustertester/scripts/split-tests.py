@@ -8,9 +8,6 @@ from argparse import ArgumentParser
 
 def get_list_of_tests(rootdir, testdir, tests, output_prefix=None):
     for testfile in os.listdir(testdir):
-        if testfile == "00-geo-rep":
-            continue
-
         full_path = os.path.join(testdir, testfile)
         if testfile.endswith(".t"):
             outpath = full_path.replace(rootdir + "/", "")

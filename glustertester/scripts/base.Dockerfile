@@ -28,12 +28,6 @@ RUN if [ "x$baseos" = "xfedora" ]; then \
         python3-pyxattr iproute-tc iputils \
         ;fi
 
-# For Geo-rep, Prepare password less ssh
-RUN mkdir -p /root/.ssh
-RUN rm -rf .ssh/id_rsa*
-RUN ssh-keygen -N "" -f /root/.ssh/id_rsa
-RUN cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
-
 ARG version="(unknown)"
 # Container build time (date -u '+%Y-%m-%dT%H:%M:%S.%NZ')
 ARG builddate="(unknown)"
@@ -46,5 +40,3 @@ LABEL vcs-type="git"
 LABEL vcs-url="https://github.com/gluster/glusterfs"
 LABEL vendor="gluster"
 LABEL version="${version}"
-
-ENTRYPOINT ["tail", "-f", "/dev/null"]
