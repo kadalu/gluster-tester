@@ -37,6 +37,27 @@ COPY run-tests.sh /usr/share/glusterfs/
 RUN chmod +x /usr/share/glusterfs/regression.sh
 RUN chmod +x /usr/share/glusterfs/run-tests.sh
 
+# SSH related things
+# Based on https://docs.docker.com/engine/examples/running_ssh_service/
+RUN mkdir /var/run/sshd
+RUN echo 'root:gluster' | chpasswd
+RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+# SSH login fix. Otherwise user is kicked off after login
+RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+
+ENV NOTVISIBLE "in users profile"
+RUN echo "export VISIBLE=now" >> /etc/profile
+RUN ssh-keygen -t rsa -N "" -b 4096 -f /etc/ssh/ssh_host_rsa_key
+
+# For Geo-rep, Prepare password less ssh
+RUN mkdir -p /root/.ssh
+RUN rm -rf .ssh/id_rsa*
+RUN ssh-keygen -N "" -f /root/.ssh/id_rsa
+RUN cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
+
+EXPOSE 22
+
 ARG version="(unknown)"
 # Container build time (date -u '+%Y-%m-%dT%H:%M:%S.%NZ')
 ARG builddate="(unknown)"
@@ -50,4 +71,4 @@ LABEL vcs-url="https://github.com/gluster/glusterfs"
 LABEL vendor="gluster"
 LABEL version="${version}"
 
-ENTRYPOINT ["tail", "-f", "/dev/null"]
+CMD ["/usr/sbin/sshd", "-D"]

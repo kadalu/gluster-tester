@@ -15,6 +15,7 @@ def run_tests(args):
 
         cmd = ("docker exec glusterfs-tester-%d bash "
                "/usr/share/glusterfs/regression.sh "
+               "-t 300 "
                "-i /root/tests/tests-%d.dat " % (num+1, num+1)
         )
 
