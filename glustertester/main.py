@@ -4,6 +4,9 @@ from argparse import ArgumentParser
 import sys
 import logging
 
+from .run_tests import run_tests
+
+
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
@@ -19,21 +22,22 @@ def run_else_exit(cmd, env=None, ignore_failure=False):
     proc = subprocess.Popen(cmd, shell=True, env=env,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
-    out, _ = proc.communicate()
+
+    for line in iter(proc.stdout.readline, b''):
+        try:
+            print(line.rstrip().decode())
+        except UnicodeDecodeError:
+            print(line.rstrip())
+
+    proc.communicate()
     if proc.returncode == 0:
         logger.info("Completed " + cmd)
-        if out.strip() != "":
-            logger.info("Output:\n" + out)
     else:
         if not ignore_failure:
             logger.error("Failed " + cmd)
-            if out.strip() != "":
-                logger.info("Output:\n" + out)
             sys.exit(1)
 
-        logger.warn("Failed " + cmd + ". ignoring..")
-        if out.strip() != "":
-            logger.info("Output:\n" + out)
+        logger.warning("Failed " + cmd + ". ignoring..")
 
 
 def run_else_ignore(cmd, env=None):
@@ -62,6 +66,23 @@ def get_args():
                             default="")
     parser_run.add_argument("--ignore-failure", action="store_true")
 
+    parser_run.add_argument("--ignore-from",
+                            help="List of ignored tests in a file")
+    parser_run.add_argument("--include-bad-tests", action="store_true",
+                            help="Do not skip bad tests")
+    parser_run.add_argument("--include-known-bugs", action="store_true",
+                            help="Do not skip known issue bugs")
+    parser_run.add_argument("--include-nfs-tests", action="store_true",
+                            help="Do not skip NFS tests")
+    parser_run.add_argument("-t", "--run-timeout", type=int, default=300,
+                            help="Each test timeout")
+    parser_run.add_argument("--retry", action="store_true",
+                            help="Retry on a test failure")
+    parser_run.add_argument("--skip-preserve-logs", action="store_true",
+                            help="Skip preserving Logs")
+    parser_run.add_argument("--preserve-success-logs", action="store_true",
+                            help="Preserve logs of successful tests")
+
     parser_baseimg = subparsers.add_parser('baseimg')
     parser_baseimg.add_argument("--logdir",
                                 help="Root Log directory for all testers",
@@ -71,9 +92,8 @@ def get_args():
 
 def subcmd_baseimg(args):
     scriptsdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts")
-    run_else_exit("bash %s/build-container.sh glusterfs-tester-base base.Dockerfile"
-                  "&>%s/build-base-container.log" % (scriptsdir, args.logdir)
-    )
+    run_else_exit("bash %s/build-container.sh glusterfs-tester-base "
+                  "base.Dockerfile" % scriptsdir)
 
 
 def subcmd_run(args):
@@ -82,10 +102,9 @@ def subcmd_run(args):
     test_env["NPARALLEL"] = str(args.num_parallel)
     test_env["REFSPEC"] = args.refspec
 
-    run_else_exit("bash %s/build-container.sh glusterfs-tester Dockerfile"
-                  "&>%s/build-container.log" % (scriptsdir, args.logdir),
-                  env=test_env
-    )
+    run_else_exit("bash %s/build-container.sh glusterfs-tester "
+                  "Dockerfile" % scriptsdir,
+                  env=test_env)
 
     for num in range(1, args.num_parallel+1):
         run_else_exit("mkdir -p %s" % os.path.join(args.backenddir, "bd-%d" % num))
@@ -111,13 +130,9 @@ def subcmd_run(args):
             " " + imgname
         )
 
-    run_cmd = "python %s/run-tests.py --num-parallel %d --logdir %s" % (
-        scriptsdir, args.num_parallel, args.logdir
-    )
-    if args.ignore_failure:
-        run_cmd += " --ignore-failure"
-
-    run_else_exit(run_cmd)
+    logger.info("Started running tests")
+    run_tests(args)
+    logger.info("Completed running tests")
 
 
 def main():

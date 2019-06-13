@@ -4,7 +4,6 @@ import subprocess
 import tarfile
 import time
 import errno
-from argparse import ArgumentParser
 
 
 def run_tests(args):
@@ -13,14 +12,38 @@ def run_tests(args):
         test_env = os.environ.copy()
         test_env["BATCHNUM"] = str(num+1)
 
-        cmd = ("docker exec glusterfs-tester-%d bash "
-               "/usr/share/glusterfs/regression.sh "
-               "-t 300 "
-               "-i /root/tests/tests-%d.dat " % (num+1, num+1)
-        )
+        cmd = ("docker exec glusterfs-tester-%d python3 "
+               "/root/runner.py "
+               "--tests-from=/root/tests/tests-%d.dat " % (num+1, num+1))
 
         if args.ignore_failure:
-            cmd += " -c"  # exit_on_failure=no in run-tests.sh
+            cmd += " --ignore-failure"  # exit_on_failure=no in run-tests.sh
+
+        if args.ignore_from:
+            cmd += " --ignore-from=%s" % os.path.join(
+                "/root/",
+                os.path.basename(args.ignore_from))
+
+        if args.include_bad_tests:
+            cmd += " --include-bad-tests"
+
+        if args.include_known_bugs:
+            cmd += " --include-known-bugs"
+
+        if args.include_nfs_tests:
+            cmd += " --include-nfs-tests"
+
+        if args.run_timeout > 0:
+            cmd += " --run-timeout=%s" % args.run_timeout
+
+        if args.retry:
+            cmd += " --retry"
+
+        if args.skip_preserve_logs:
+            cmd += " --skip-preserve-logs"
+
+        if args.preserve_success_logs:
+            cmd += " --preserve-success-logs"
 
         cmd += " &>/var/log/gluster-tester/regression-%d.log" % (num+1)
 
@@ -70,18 +93,3 @@ def run_tests(args):
             tar.add(args.logdir, arcname=os.path.basename(args.logdir))
 
     sys.exit(ret)
-
-
-def main():
-    parser = ArgumentParser()
-    parser.add_argument("--num-parallel",
-                        help="Number of parallel executions", type=int)
-    parser.add_argument("--logdir", help="Log directory")
-    parser.add_argument("--ignore-failure", action="store_true")
-    args = parser.parse_args()
-
-    run_tests(args)
-
-
-if __name__ == "__main__":
-    main()

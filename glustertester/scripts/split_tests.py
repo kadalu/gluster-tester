@@ -5,19 +5,7 @@ import sys
 import glob
 from argparse import ArgumentParser
 
-
-def get_list_of_tests(rootdir, testdir, tests, output_prefix=None):
-    for testfile in os.listdir(testdir):
-        full_path = os.path.join(testdir, testfile)
-        if testfile.endswith(".t"):
-            outpath = full_path.replace(rootdir + "/", "")
-            if output_prefix is not None:
-                outpath = os.path.join(output_prefix, outpath)
-
-            tests.append(outpath)
-
-        if os.path.isdir(full_path):
-            get_list_of_tests(rootdir, full_path, tests, output_prefix)
+from testutils import get_list_of_tests
 
 
 def main():
