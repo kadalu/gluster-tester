@@ -22,20 +22,20 @@ RUN cd /root/glusterfs/extras/LinuxRPM && ./make_glusterrpms
 RUN rm -f /root/glusterfs/extras/LinuxRPM/*.src.rpm
 RUN yum install -y /root/glusterfs/extras/LinuxRPM/*.rpm
 
-COPY split-tests.py /root/
+COPY split_tests.py testutils.py runner.py /root/
 
 # Split the tests
 ARG nparallel=3
-RUN python /root/split-tests.py \
+RUN python3 /root/split_tests.py \
         --testsdir=/root/glusterfs/tests \
         --output-prefix="/usr/share/glusterfs/tests/" \
         --outdir=/root/tests \
         -n ${nparallel}
 
-COPY regression.sh /usr/share/glusterfs/
-COPY run-tests.sh /usr/share/glusterfs/
-RUN chmod +x /usr/share/glusterfs/regression.sh
-RUN chmod +x /usr/share/glusterfs/run-tests.sh
+# COPY regression.sh /usr/share/glusterfs/
+# COPY run-tests.sh /usr/share/glusterfs/
+# RUN chmod +x /usr/share/glusterfs/regression.sh
+# RUN chmod +x /usr/share/glusterfs/run-tests.sh
 
 # SSH related things
 # Based on https://docs.docker.com/engine/examples/running_ssh_service/
