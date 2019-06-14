@@ -4,13 +4,14 @@ Collection of utilities to run Gluster tests in parallel.
 
 ## Setup
 
-Clone the repo and install using,
+- Install [docker-ce](https://docs.docker.com/install/linux/docker-ce/fedora/)
+- Clone the repo and install using,
+     
+       git clone https://github.com/aravindavk/gluster-tester.git
+       cd gluster-tester
+       sudo python3 setup.py install
 
-```
-git clone https://github.com/aravindavk/gluster-tester.git
-cd gluster-tester
-sudo python3 setup.py install
-```
+## Usage
 
 Create the base image by running the following command.(This command
 can be scheduled to run nightly)
