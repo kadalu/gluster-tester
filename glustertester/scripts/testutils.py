@@ -176,7 +176,7 @@ def clean_logdir(logdir):
         return
 
     to_delete = []
-    for root, _, files in os.walk(tardir):
+    for root, _, files in os.walk(logdir):
         for filename in files:
             if not filename.endswith(".tar"):
                 to_delete.append(os.path.join(root, filename))
