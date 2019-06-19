@@ -119,11 +119,15 @@ def subcmd_run(args):
         bddir = os.path.join(args.backenddir, "bd-%d" % num)
         imgname = "gluster/glusterfs-tester:latest"
         name = "glusterfs-tester-%d" % num
+        hostname = "gnode%d" % num
         run_else_exit(
             "docker run -d"
             " --cap-add sys_admin"
             " --privileged=true"
+            " --hostname " + hostname +
             " --device /dev/fuse"
+            " --sysctl net.ipv6.conf.all.disable_ipv6=1"
+            " --sysctl net.ipv6.conf.default.disable_ipv6=1"
             " --name " + name +
             " --mount type=bind,source=" + logdir + ",target=/var/log"
             " --mount type=bind,source=" + bddir + ",target=/d"
