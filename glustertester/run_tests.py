@@ -20,9 +20,7 @@ def run_tests(args):
             cmd += " --ignore-failure"  # exit_on_failure=no in run-tests.sh
 
         if args.ignore_from:
-            cmd += " --ignore-from=%s" % os.path.join(
-                "/root/",
-                os.path.basename(args.ignore_from))
+            cmd += " --ignore-from=/root/ignore_tests.dat"
 
         if args.include_bad_tests:
             cmd += " --include-bad-tests"
@@ -63,10 +61,12 @@ def run_tests(args):
             job_ret = job.poll()
             if job_ret is not None:
                 num_jobs_complete += 1
+                if job_ret != 0:
+                    ret = 1
+
                 if job_ret != 0 and not args.ignore_failure:
                     print("Job %d failed. Stopping all "
                           "other running jobs" % (idx+1))
-                    ret = job_ret
                     terminate = True
                     break
 
@@ -92,4 +92,4 @@ def run_tests(args):
                 "/var/log/gluster-tester/glusterfs-logs.tgz", "w:gz") as tar:
             tar.add(args.logdir, arcname=os.path.basename(args.logdir))
 
-    sys.exit(ret)
+    return ret
