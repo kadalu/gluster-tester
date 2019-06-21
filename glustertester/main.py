@@ -134,9 +134,22 @@ def subcmd_run(args):
             " " + imgname
         )
 
+        # Create loop files
+        run_else_exit(
+            "docker exec " + name +
+            " bash -c 'for i in {0..20}; do mknod /dev/loop$i b 7 $i; done'"
+        )
+
+        if args.ignore_from:
+            run_else_exit(
+                "docker cp %s %s:/root/ignore_tests.dat" % (args.ignore_from, name)
+            )
+
     logger.info("Started running tests")
-    run_tests(args)
+    ret = run_tests(args)
     logger.info("Completed running tests")
+    logger.info("Result is %s" % ret)
+    sys.exit(ret)
 
 
 def main():

@@ -10,7 +10,7 @@ RUN mkdir -p /root/tests
 # TODO: Handle CentOS dependencies
 # TODO: Include sysvinit-tools, netstat in case of centos
 RUN if [ "x$baseos" = "xfedora" ]; then \
-        yum install -y \
+        dnf install -y \
         git autoconf automake bison dos2unix flex fuse-devel glib2-devel \
         libaio-devel libattr-devel libibverbs-devel librdmacm-devel \
         libtool libxml2-devel lvm2-devel make openssl-devel pkgconfig \
@@ -25,7 +25,7 @@ RUN if [ "x$baseos" = "xfedora" ]; then \
         python3-requests python3-urllib3 resource-agents rsync samba-client-libs \
         samba-common samba-common-libs bc libtalloc libtdb libtevent linux-atm-libs \
         python3-chardet python3-idna python3-prettytable python3-pysocks \
-        python3-pyxattr iproute-tc iputils gdb \
+        python3-pyxattr iproute-tc iputils gdb systemd-udev dbus-python cronie sos \
         ;fi
 
 ARG version="(unknown)"

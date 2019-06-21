@@ -20,7 +20,7 @@ RUN cd /root/glusterfs/extras/LinuxRPM && ./make_glusterrpms
 
 # Install Gluster RPMs
 RUN rm -f /root/glusterfs/extras/LinuxRPM/*.src.rpm
-RUN yum install -y /root/glusterfs/extras/LinuxRPM/*.rpm
+RUN dnf install -y /root/glusterfs/extras/LinuxRPM/*.rpm
 
 COPY split_tests.py testutils.py runner.py /root/
 
@@ -56,6 +56,20 @@ RUN rm -rf .ssh/id_rsa*
 RUN ssh-keygen -N "" -f /root/.ssh/id_rsa
 RUN cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 
+RUN sed -i "s/LANG/\#LANG/g" /etc/locale.conf && \
+    sed -i 's/Requires\=rpcbind\.service//g' /usr/lib/systemd/system/glusterd.service && \
+    sed -i 's/rpcbind\.service/gluster-setup\.service/g' /usr/lib/systemd/system/glusterd.service && \
+    sed -i.save -e "s#udev_sync = 1#udev_sync = 0#" -e "s#udev_rules = 1#udev_rules = 0#" -e "s#use_lvmetad = 1#use_lvmetad = 0#" -e "s#obtain_device_list_from_udev = 1#obtain_device_list_from_udev = 0#" /etc/lvm/lvm.conf && \
+    systemctl mask getty.target && \
+    systemctl disable systemd-udev-trigger.service && \
+    systemctl disable systemd-udevd.service && \
+    systemctl disable nfs-server.service && \
+    systemctl enable rpcbind.service && \
+    systemctl enable sshd.service && \
+    mkdir -p /var/log/core;
+
+# EXPOSE 2222 111 245 443 24006 24007 2049 8080 6010 6011 6012 38465 38466 38468 38469 49152 49153 49154 49156 49157 49158 49159 49160 49161 49162
+
 EXPOSE 22
 
 ARG version="(unknown)"
@@ -71,4 +85,4 @@ LABEL vcs-url="https://github.com/gluster/glusterfs"
 LABEL vendor="gluster"
 LABEL version="${version}"
 
-CMD ["/usr/sbin/sshd", "-D"]
+CMD ["/usr/sbin/init"]
