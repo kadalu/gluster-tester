@@ -4,9 +4,66 @@ import subprocess
 import tarfile
 import time
 import errno
+import logging
+
+logger = logging.getLogger()
+last_printed = None
 
 
-def run_tests(args):
+def print_summary(logdir, njobs, starttime, totaltests):
+    global last_printed
+    # Print summary once in 2 minutes
+    if last_printed is None or (int(time.time()) - last_printed) >= 70:
+        last_printed = int(time.time())
+
+        totalpass = 0
+        totalfail = 0
+        total = 0
+        jobs_msg = "Jobs: "
+        for job in range(1, njobs+1):
+            tpass = 0
+            tfail = 0
+            logfile = os.path.join(logdir, "regression-%s.log" % job)
+
+            # Log file not yet created
+            if not os.path.exists(logfile):
+                continue
+
+            with open(logfile) as logf:
+                for line in logf:
+                    if "Result: PASS" in line:
+                        tpass += 1
+                    if "Result: FAIL" in line:
+                        tfail += 1
+
+            totalfail += tfail
+            totalpass += tpass
+            jobs_msg += "[Job-%d  passed=%d  failed=%d]  " % (job,
+                                                              tpass,
+                                                              tfail)
+        total = totalpass + totalfail
+        duration = int(time.time()) - starttime
+        speed = int(total / (duration/60))
+        progress = int(total * 100 / totaltests)
+        # estimated = remaining / speed
+        if speed > 0:
+            estimated_time = "%d minutes" % int((totaltests - total) / speed)
+        else:
+            estimated_time = "-"
+
+        logger.info("Summary: %s tests complete  passed=%s  "
+                    "failed=%s  speed=%s tpm  progress=%s%% "
+                    "estimate=%s" % (
+                        total,
+                        totalpass,
+                        totalfail,
+                        speed,
+                        progress,
+                        estimated_time))
+        logger.info(jobs_msg)
+
+
+def run_tests(args, starttime, totaltests):
     jobs = []
     for num in range(args.num_parallel):
         test_env = os.environ.copy()
@@ -56,6 +113,7 @@ def run_tests(args):
     ret = 0
     terminate = False
     while not terminate:
+        print_summary(args.logdir, args.num_parallel, starttime, totaltests)
         num_jobs_complete = 0
         for idx, job in enumerate(jobs):
             job_ret = job.poll()

@@ -3,6 +3,7 @@ import subprocess
 from argparse import ArgumentParser
 import sys
 import logging
+import time
 
 from .run_tests import run_tests
 
@@ -97,6 +98,7 @@ def subcmd_baseimg(args):
 
 
 def subcmd_run(args):
+    starttime = int(time.time())
     scriptsdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts")
     test_env = os.environ.copy()
     test_env["NPARALLEL"] = str(args.num_parallel)
@@ -105,6 +107,9 @@ def subcmd_run(args):
     run_else_exit("bash %s/build-container.sh glusterfs-tester "
                   "Dockerfile" % scriptsdir,
                   env=test_env)
+
+    # TODO: Get exact number
+    totaltests = 696
 
     for num in range(1, args.num_parallel+1):
         run_else_exit("mkdir -p %s" % os.path.join(args.backenddir, "bd-%d" % num))
@@ -146,7 +151,7 @@ def subcmd_run(args):
             )
 
     logger.info("Started running tests")
-    ret = run_tests(args)
+    run_tests(args, starttime, totaltests)
     logger.info("Completed running tests")
     logger.info("Result is %s" % ret)
     sys.exit(ret)
