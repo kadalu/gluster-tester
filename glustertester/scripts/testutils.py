@@ -74,7 +74,7 @@ def print_summary(ret):
 
     import operator
     sorted_elapsed_times = sorted(SUMMARY[KEY_TESTS_ELAPSED_TIMES].items(),
-                                  key=operator.itemgetter(1))
+                                  key=operator.itemgetter(1), reverse=True)
     for key, value in sorted_elapsed_times:
         print("%4s  %s" % (value, key))
 

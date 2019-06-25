@@ -114,7 +114,7 @@ def run_tests(testslist, args):
 
     for testpath in testslist:
         testpath = testpath.strip()
-        if testpath in ignored_tests:
+        if testpath.replace("/root/glusterfs/", "") in ignored_tests:
             print("Ignored test %s" % testpath)
             continue
 

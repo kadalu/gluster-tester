@@ -53,13 +53,14 @@ def print_summary(logdir, njobs, starttime, totaltests):
 
         logger.info("Summary: %s tests complete  passed=%s  "
                     "failed=%s  speed=%s tpm  progress=%s%% "
-                    "estimate=%s" % (
+                    "estimate=%s  duration=%d minutes" % (
                         total,
                         totalpass,
                         totalfail,
                         speed,
                         progress,
-                        estimated_time))
+                        estimated_time,
+                        (duration / 60)))
         logger.info(jobs_msg)
 
 
@@ -69,7 +70,7 @@ def run_tests(args, starttime, totaltests):
         test_env = os.environ.copy()
         test_env["BATCHNUM"] = str(num+1)
 
-        cmd = ("docker exec glusterfs-tester-%d python3 "
+        cmd = ("docker exec -t glusterfs-tester-%d python3 "
                "/root/runner.py "
                "--tests-from=/root/tests/tests-%d.dat " % (num+1, num+1))
 
@@ -100,7 +101,8 @@ def run_tests(args, starttime, totaltests):
         if args.preserve_success_logs:
             cmd += " --preserve-success-logs"
 
-        cmd += " &>/var/log/gluster-tester/regression-%d.log" % (num+1)
+        cmd += " &>%s" % (os.path.join(args.logdir,
+                                       "regression-%d.log" % (num+1)))
 
         jobs.append(subprocess.Popen(
             cmd,
@@ -146,8 +148,8 @@ def run_tests(args, starttime, totaltests):
         job.communicate()
 
     if ret != 0:
-        with tarfile.open(
-                "/var/log/gluster-tester/glusterfs-logs.tgz", "w:gz") as tar:
+        tarfilename = os.path.join(args.logdir, "glusterfs-logs.tgz")
+        with tarfile.open(tarfilename, "w:gz") as tar:
             tar.add(args.logdir, arcname=os.path.basename(args.logdir))
 
     return ret

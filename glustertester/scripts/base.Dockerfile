@@ -26,6 +26,7 @@ RUN if [ "x$baseos" = "xfedora" ]; then \
         samba-common samba-common-libs bc libtalloc libtdb libtevent linux-atm-libs \
         python3-chardet python3-idna python3-prettytable python3-pysocks \
         python3-pyxattr iproute-tc iputils gdb systemd-udev dbus-python cronie sos \
+        vim-common bind-utils \
         ;fi
 
 ARG version="(unknown)"
