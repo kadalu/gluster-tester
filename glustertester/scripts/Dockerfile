@@ -5,6 +5,8 @@ ARG baseos=fedora
 
 RUN mkdir -p /root/tests
 
+RUN date +%s
+
 ARG refspec=""
 RUN cd /root/ && git clone --depth 1 https://review.gluster.org/glusterfs
 RUN if [ "x$refspec" != "x" ]; then \
@@ -16,6 +18,19 @@ RUN if [ "x$refspec" != "x" ]; then \
         git checkout -b test-master master \
         ;fi
 
+# To substitute proper values in test files(Example: tests/env.rc)
+RUN cd /root/glusterfs && ./autogen.sh
+RUN cd /root/glusterfs && ./configure --build=x86_64-redhat-linux-gnu \
+        --host=x86_64-redhat-linux-gnu --program-prefix= \
+        --disable-dependency-tracking --prefix=/usr --exec-prefix=/usr \
+        --bindir=/usr/bin --sbindir=/usr/sbin --sysconfdir=/etc \
+        --datadir=/usr/share --includedir=/usr/include --libdir=/usr/lib64 \
+        --libexecdir=/usr/libexec --localstatedir=/var \
+        --sharedstatedir=/var/lib --mandir=/usr/share/man \
+        --infodir=/usr/share/info --enable-firewalld --enable-gnfs \
+        --with-tmpfilesdir=/usr/lib/tmpfiles.d --disable-syslog
+
+# Generate RPMs
 RUN cd /root/glusterfs/extras/LinuxRPM && ./make_glusterrpms
 
 # Install Gluster RPMs
@@ -28,14 +43,9 @@ COPY split_tests.py testutils.py runner.py /root/
 ARG nparallel=3
 RUN python3 /root/split_tests.py \
         --testsdir=/root/glusterfs/tests \
-        --output-prefix="/usr/share/glusterfs/tests/" \
+        --output-prefix="/root/glusterfs/tests/" \
         --outdir=/root/tests \
         -n ${nparallel}
-
-# COPY regression.sh /usr/share/glusterfs/
-# COPY run-tests.sh /usr/share/glusterfs/
-# RUN chmod +x /usr/share/glusterfs/regression.sh
-# RUN chmod +x /usr/share/glusterfs/run-tests.sh
 
 # SSH related things
 # Based on https://docs.docker.com/engine/examples/running_ssh_service/
@@ -55,6 +65,10 @@ RUN mkdir -p /root/.ssh
 RUN rm -rf .ssh/id_rsa*
 RUN ssh-keygen -N "" -f /root/.ssh/id_rsa
 RUN cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
+
+# NFS user and group setup
+RUN groupadd nfsnobody
+RUN useradd nfsnobody -g nfsnobody
 
 RUN sed -i "s/LANG/\#LANG/g" /etc/locale.conf && \
     sed -i 's/Requires\=rpcbind\.service//g' /usr/lib/systemd/system/glusterd.service && \

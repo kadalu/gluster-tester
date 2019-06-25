@@ -19,7 +19,7 @@ logger.addHandler(handler)
 
 
 def run_else_exit(cmd, env=None, ignore_failure=False):
-    logger.info("Started " + cmd)
+    logger.info("Starting command \"" + cmd + "\"")
     proc = subprocess.Popen(cmd, shell=True, env=env,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
@@ -32,13 +32,13 @@ def run_else_exit(cmd, env=None, ignore_failure=False):
 
     proc.communicate()
     if proc.returncode == 0:
-        logger.info("Completed " + cmd)
+        logger.info("Command completed \"" + cmd + "\"")
     else:
         if not ignore_failure:
-            logger.error("Failed " + cmd)
+            logger.error("Command failed \"" + cmd + "\"")
             sys.exit(1)
 
-        logger.warning("Failed " + cmd + ". ignoring..")
+        logger.warning("Command failed \"" + cmd + "\". ignoring..")
 
 
 def run_else_ignore(cmd, env=None):
@@ -88,7 +88,28 @@ def get_args():
     parser_baseimg.add_argument("--logdir",
                                 help="Root Log directory for all testers",
                                 default="/var/log/gluster-tester")
+
+    parser_cleanup = subparsers.add_parser('cleanup')
+    parser_cleanup.add_argument("--logdir",
+                                help="Root Log directory for all testers",
+                                default="/var/log/gluster-tester")
+    parser_cleanup.add_argument("--backenddir",
+                                help="Root directory for bricks",
+                                default="/d")
     return parser.parse_args()
+
+
+def subcmd_cleanup(args):
+    run_else_ignore("docker ps --filter name=glusterfs-tester -q | "
+                    "xargs docker kill")
+    run_else_ignore("docker ps -a --filter name=glusterfs-tester -q | "
+                    "xargs docker rm")
+
+    if args.logdir not in ["", "/"]:
+        run_else_ignore("rm -rf %s" % args.logdir)
+
+    if args.backenddir not in ["", "/"]:
+        run_else_ignore("rm -rf %s" % args.backenddir)
 
 
 def subcmd_baseimg(args):
@@ -151,9 +172,11 @@ def subcmd_run(args):
             )
 
     logger.info("Started running tests")
-    run_tests(args, starttime, totaltests)
+    ret = run_tests(args, starttime, totaltests)
     logger.info("Completed running tests")
-    logger.info("Result is %s" % ret)
+    logger.info("Result is %s (Duration: %d minutes)" % (
+        ret,
+        (int(time.time()) - starttime)/60))
     sys.exit(ret)
 
 
@@ -167,6 +190,10 @@ def main():
 
         if args.subcmd == "baseimg":
             subcmd_baseimg(args)
+            return
+
+        if args.subcmd == "cleanup":
+            subcmd_cleanup(args)
             return
     except KeyboardInterrupt:
         sys.exit(1)
