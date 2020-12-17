@@ -161,7 +161,7 @@ def subcmd_run(args):
         )
 
         # Create loop files
-        run_else_exit(
+        run_else_ignore(
             "docker exec " + name +
             " bash -c 'for i in {0..20}; do mknod /dev/loop$i b 7 $i; done'"
         )

@@ -1,4 +1,4 @@
-ARG baseversion=29
+ARG baseversion=33
 ARG baseos=fedora
 FROM ${baseos}:${baseversion}
 
@@ -11,22 +11,20 @@ RUN mkdir -p /root/tests
 # TODO: Include sysvinit-tools, netstat in case of centos
 RUN if [ "x$baseos" = "xfedora" ]; then \
         dnf install -y \
-        git autoconf automake bison dos2unix flex fuse-devel glib2-devel \
-        libaio-devel libattr-devel libibverbs-devel librdmacm-devel \
-        libtool libxml2-devel lvm2-devel make openssl-devel pkgconfig \
-        pyliblzma python-devel python-eventlet python-netifaces python-paste-deploy \
-        python-simplejson python-sphinx python-webob pyxattr readline-devel \
+        git autoconf automake bison flex fuse-devel \
+        libaio-devel libattr-devel libtool libxml2-devel lvm2-devel make \
+	openssl-devel pkgconfig python3-devel python3-eventlet python3-netifaces \
+	python3-paste-deploy python3-simplejson python3-sphinx readline-devel \
         rpm-build systemtap-sdt-devel tar libcmocka-devel rpcgen libacl-devel \
-        sqlite-devel libtirpc-devel userspace-rcu-devel libselinux-python \
-        perl-Test-Harness which attr dbench git nfs-utils xfsprogs \
-        yajl openssh-clients openssh-server openssh python2-psutil userspace-rcu \
-        firewalld libcurl-devel python3-devel cifs-utils e2fsprogs hostname \
-        iproute libldb libss libwbclient lmdb-libs net-tools psmisc \
-        python3-requests python3-urllib3 resource-agents rsync samba-client-libs \
-        samba-common samba-common-libs bc libtalloc libtdb libtevent linux-atm-libs \
+        libtirpc-devel userspace-rcu-devel \
+        perl-Test-Harness which attr dbench nfs-utils xfsprogs \
+        yajl openssh-clients openssh-server openssh firewalld libcurl-devel \
+	cifs-utils e2fsprogs hostname iproute libldb libss libwbclient net-tools psmisc \
+        python3-requests python3-urllib3 resource-agents rsync \
+        bc libtalloc libtdb libtevent linux-atm-libs \
         python3-chardet python3-idna python3-prettytable python3-pysocks \
-        python3-pyxattr iproute-tc iputils gdb systemd-udev dbus-python cronie sos \
-        vim-common bind-utils \
+        python3-pyxattr iproute-tc iputils gdb systemd-udev cronie sos \
+        bind-utils \
         ;fi
 
 ARG version="(unknown)"
