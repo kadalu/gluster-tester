@@ -8,16 +8,17 @@ RUN mkdir -p /root/tests
 RUN date +%s
 
 ARG refspec=""
-RUN cd /root/ && git clone --depth 1 https://review.gluster.org/glusterfs
+RUN cd /root/ && git clone --depth 1 https://github.com/gluster/glusterfs
 RUN if [ "x$refspec" != "x" ]; then \
         cd /root/glusterfs && \
-        git fetch git://review.gluster.org/glusterfs $refspec && \
+        git fetch https://github.com/gluster/glusterfs $refspec && \
         git checkout -b test-${refspec//\//_} FETCH_HEAD; \
         else \
         cd /root/glusterfs && \
-        git checkout -b test-master master \
+        git checkout -b test-devel devel \
         ;fi
 
+RUN dnf install -y uuid-devel libuuid-devel
 # To substitute proper values in test files(Example: tests/env.rc)
 RUN cd /root/glusterfs && ./autogen.sh
 RUN cd /root/glusterfs && ./configure --build=x86_64-redhat-linux-gnu \
@@ -30,12 +31,7 @@ RUN cd /root/glusterfs && ./configure --build=x86_64-redhat-linux-gnu \
         --infodir=/usr/share/info --enable-firewalld --enable-gnfs \
         --with-tmpfilesdir=/usr/lib/tmpfiles.d --disable-syslog
 
-# Generate RPMs
-RUN cd /root/glusterfs/extras/LinuxRPM && ./make_glusterrpms
-
-# Install Gluster RPMs
-RUN rm -f /root/glusterfs/extras/LinuxRPM/*.src.rpm
-RUN dnf install -y /root/glusterfs/extras/LinuxRPM/*.rpm
+RUN cd /root/glusterfs && make && make install
 
 COPY split_tests.py testutils.py runner.py /root/
 
