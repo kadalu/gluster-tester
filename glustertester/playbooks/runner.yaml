@@ -87,7 +87,7 @@
         depth: 1
         clone: yes
         update: yes
-        repo: https://review.gluster.org/glusterfs
+        repo: https://github.com/gluster/glusterfs
         dest: "{{ sourcedir }}"
         version: master
       when: patch == "0"
@@ -97,7 +97,7 @@
         depth: 1
         clone: yes
         update: yes
-        repo: https://review.gluster.org/glusterfs
+        repo: https://github.com/gluster/glusterfs
         dest: "{{ sourcedir }}"
         refspec: refs/changes/{{ (patch | string)[-2:] }}/{{ patch }}/{{ patchset }}
         version: master
